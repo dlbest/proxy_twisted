@@ -124,7 +124,7 @@ class Engine(object):
             for i in component:
                 self.component[i] = getattr(sys.modules[__name__], i, None).produce(self, setting)
 
-    def start(self, urls, concurrent=5, delay=30):
+    def start(self, urls, concurrent=1, delay=30):
         deferred_list1 = []
         requests = self.component['Spider'].get_request(urls)
         self.enqueue_request(requests)
@@ -135,7 +135,7 @@ class Engine(object):
         return DeferredList(deferred_list1)  # 待所有的deferred元素都激活返回后，才会激活deferred list
 
     @inlineCallbacks
-    def download(self, request, delay):
+    def download(self, request, delay=0):
         """
         download the page and scrape the item
         """
@@ -147,14 +147,15 @@ class Engine(object):
                 check_d = self.component['Checker'].check(item)
                 check_d.addCallback(self.component['Pipeline'].process_item)
                 deferred_list.append(check_d)
-                return DeferredList(deferred_list)
+            dl = DeferredList(deferred_list)
+            return dl
 
         dd = self.component['Downloader'].download(request)
         dd.addCallback(self.component['Spider'].parse)
         dd.addCallback(lambda x: list(x))
         dd.addCallback(get_item)
         dd.addBoth(self.update_alive_request, request, delay)
-        dd.addBoth(lambda x: print('+++++++++++++++', x))
+        dd.addBoth(lambda x: logging.debug(x))
         yield dd
 
     def enqueue_request(self, requests):
@@ -162,7 +163,7 @@ class Engine(object):
         for request in list(requests):
             scheduler.queue.put(request, block=True)
 
-    def fire_request(self, count=5):
+    def fire_request(self, count=1):
         for i in range(count):
             request = self.component['Scheduler'].queue.get(block=False)
             self.alive_requests.append(request)
@@ -173,8 +174,8 @@ class Engine(object):
         request = next(self.fire_request(1))
         logging.debug('fire new requests')
         ddd = Deferred()
-        ddd.addCallback(self.download)
-        reactor.callLater(delay, ddd.callback, request, delay)  # 注册一个事件而已
+        ddd.addCallback(self.download, delay)
+        reactor.callLater(delay, ddd.callback, request)  # 注册一个事件而已
         return ddd
 
 
@@ -207,8 +208,8 @@ class Downloader(object):
                 returnValue('unexpected page')
 
             def get_response(result: bytes):
-                logging.debug('successfully downloaded '+response.request.url)
-                logging.info(response.code)
+                logging.debug('successfully downloaded '+response.request.absoluteURI.decode('utf-8'))
+                logging.debug(response.code)
                 response.body = result
                 response.text = result.decode('utf-8')  # excellent
                 return response
@@ -252,7 +253,7 @@ class Checker(object):
         return self._check(item)
 
     def _check(self, item):
-        logging.debug('check+++' + item)
+        logging.debug('checking...')
         item[1] = int(item[1])
         endpoint = HostnameEndpoint(reactor, item[0], item[1])
         agent = ProxyAgent(endpoint)  #
@@ -260,17 +261,22 @@ class Checker(object):
             'User-Agent': ['Mozilla/5.0']
         }
         headers = Headers(headers)
-        d = agent.request(b'GET', b'https://www.baidu.com/', headers=headers)  # ?
-        d._connectTimeout = 10
+        cd = agent.request(b'GET', b'https://www.baidu.com/', headers=headers)  # ?
+        cd._connectTimeout = 10
 
         def check_code(response):
             if response.code < 300:
+                logging.info('valid ip!')
                 return item
             else:
                 raise Exception('invalid')
 
-        d.addCallback(check_code)
-        return d
+        def err(f):
+            logging.debug(f)
+            return f
+
+        cd.addCallbacks(check_code, errback=err)
+        return cd
 
 
 class Pipeline(object):
@@ -305,9 +311,9 @@ class Pipeline(object):
         return item
 
     def insert_item(self, cursor, item):
-        sql = """insert into ipool1(ip, port, location, security, protocol, reaction, valid_date) 
-        values(%s, %s, %s, %s, %s, %s, %s)
-        """
+        item = (item[0], item[1], item[3], item[5], item[6], item[11], item[12])
+        sql = """insert into xici(ip, port, location, security, protocol, life, valid_date) 
+        values(%s, %s, %s, %s, %s, %s, %s)"""
         cursor.execute(sql, item)
 
     def handle_err(self, err):
@@ -332,12 +338,12 @@ class Spider(object):
         return self._parse(response)
 
     def _parse(self, response):
-        logging.debug(response)
-        selector = etree.HTML(response.text, etree.HTMLParser())  # 需要修复
+        logging.debug(response.code)
+        selector = etree.HTML(response.text)
         logging.debug(selector)
         nodes = selector.xpath(r'//table/tr')
         for node in nodes:
-            result = node.xpath(r'td/text()')
+            result = node.xpath(r'td/text()|td/a/text()')
             logging.debug(result)
             if result:
                 logging.debug('successfully get an item')
@@ -346,7 +352,7 @@ class Spider(object):
 
 if __name__ == "__main__":
     eng = Engine(settings)
-    d = eng.start([r'https://www.xicidaili.com/nn/%d' % i for i in range(10)])
+    d = eng.start([r'https://www.xicidaili.com/nn/%d' % i for i in range(1, 11)])
 
 
     def pp(result):
