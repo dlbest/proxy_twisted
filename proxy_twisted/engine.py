@@ -146,6 +146,7 @@ class Engine(object):
             for item in items:
                 check_d = self.component['Checker'].check(item)
                 check_d.addCallback(self.component['Pipeline'].process_item)
+                check_d.addErrback(lambda x: print(x, '----------------------------------------------'))
                 deferred_list.append(check_d)
             dl = DeferredList(deferred_list)
             return dl
@@ -170,6 +171,7 @@ class Engine(object):
             yield request
 
     def update_alive_request(self, _, request, delay=0):
+        logging.info('downloading' + request.url + 'is finished!')
         self.alive_requests.remove(request)
         request = next(self.fire_request(1))
         logging.debug('fire new requests')
@@ -262,7 +264,7 @@ class Checker(object):
         }
         headers = Headers(headers)
         cd = agent.request(b'GET', b'https://www.baidu.com/', headers=headers)  # ?
-        cd._connectTimeout = 10
+        cd._connectTimeout = 3
 
         def check_code(response):
             if response.code < 300:
