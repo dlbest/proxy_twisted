@@ -20,7 +20,7 @@ from twisted.enterprise import adbapi
 import pymysql
 import sys
 from queue import Queue
-import settings
+from proxy_twisted import settings
 
 # 解决ssl验证失败问题
 from twisted.internet import _sslverify
