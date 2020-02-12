@@ -20,5 +20,5 @@ setup(
     long_description=long_description,
     packages=find_packages(),
     include_package_data=True,
-    zip_safe=True
+    zip_safe=True, install_requires=['pymysql', 'twisted', 'lxml']
 )

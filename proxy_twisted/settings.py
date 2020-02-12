@@ -6,7 +6,13 @@
 
 
 # components
-COMPONENT = ['Downloader', 'Checker', 'Pipeline', 'Scheduler', 'Spider']
+COMPONENT = {
+    'Downloader': 'proxy_twisted.downloaders.Downloader',
+    'Checker': 'proxy_twisted.pipelines.Checker',
+    'Pipeline': 'proxy_twisted.pipelines.Pipeline',
+    'Scheduler': 'proxy_twisted.engine.Scheduler',
+    'Spider': 'proxy_twisted.spiders.Spider'
+}
 
 # Downloader
 DELAY = 30
