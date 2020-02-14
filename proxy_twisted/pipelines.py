@@ -26,14 +26,14 @@ class Pipeline(object):
     process the scraped item
     """
 
-    def __init__(self, pool: adbapi.ConnectionPool, engine, setting):
+    def __init__(self, pool: adbapi.ConnectionPool, engine, settings):
         logger.info('pipeline is starting')
         self.pool = pool
         self.engine = weakref.ref(engine)
-        self.setting = setting
+        self.settings = settings
 
     @classmethod
-    def produce(cls, engine, setting):
+    def produce(cls, engine, settings):
         params = {
             'host': '192.168.1.55',
             'port': 3306,
@@ -45,7 +45,7 @@ class Pipeline(object):
             'cursorclass': pymysql.cursors.DictCursor
         }
         pool = adbapi.ConnectionPool('pymysql', **params)
-        return cls(pool, engine, setting)
+        return cls(pool, engine, settings)
 
     def process_item(self, item):
         if item:
@@ -72,14 +72,14 @@ class Checker(object):
     check te validness of ip
     """
 
-    def __init__(self, engine, setting):
+    def __init__(self, engine, settings):
         logger.info('checker is starting')
         self.engine = weakref.ref(engine)
-        self.setting = setting
+        self.setting = settings
 
     @classmethod
-    def produce(cls, engine, setting):
-        return cls(engine, setting)
+    def produce(cls, engine, settings):
+        return cls(engine, settings)
 
     def check(self, item):
         return self._check(item)

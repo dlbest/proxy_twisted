@@ -13,7 +13,6 @@ from twisted.internet import reactor
 
 import sys
 from queue import Queue
-from proxy_twisted import settings
 from proxy_twisted.utils import load_object   # low coupling
 
 import logging
@@ -32,12 +31,12 @@ class Item(dict):
 
 
 class Scheduler(object):
-    def __init__(self, engine, setting):
+    def __init__(self, engine, settings):
         self.queue = Queue()
 
     @classmethod
-    def produce(cls, engine, setting):
-        return cls(engine, setting)
+    def produce(cls, engine, settings):
+        return cls(engine, settings)
 
     def dequeue_request(self, block=False, timeout=0):
         return self.queue.get(block=block, timeout=timeout)
@@ -48,16 +47,20 @@ class Scheduler(object):
 
 class Engine(object):
 
-    def __init__(self, setting):
+    def __init__(self, settings):
         self.alive_requests = []
-        self.setting = setting
-        component = getattr(setting, 'COMPONENT', None)
+        self.setting = settings
+        component = getattr(settings, 'COMPONENT', None)
         self.component = {}
         if component:
             for i in component:
                 self.component[i] = load_object(component[i]).produce(self, setting)
                 # self.component[i] = getattr(sys.modules[__name__], i, None).produce(self, setting)
                 # using produce class method like using factory
+
+    @classmethod
+    def produce(cls, settings):
+        return cls(settings)
 
     def start(self, urls, concurrent=1, delay=30):
         deferred_list1 = []
@@ -116,19 +119,3 @@ class Engine(object):
         return ddd
 
 
-if __name__ == "__main__":
-    eng = Engine(settings)
-    d = eng.start([r'https://www.xicidaili.com/nn/%d' % i for i in range(1, 11)])
-
-
-    def pp(result):
-        logger.debug(result)
-        reactor.stop()
-
-
-    d.addBoth(pp)
-    reactor.run()  # 事件循环正式开始，此时信息才被处理，回调开始被激活
-
-    # downloader = Downloader(None, None)
-    # downloader.download(r'https://www.xicidaili.com/nn')
-    # reactor.run()

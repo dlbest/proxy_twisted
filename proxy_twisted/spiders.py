@@ -17,14 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 class Spider(object):
-    def __init__(self, engine, setting):
+    def __init__(self, engine, settings):
         logging.info('parser is starting...')
-        self.setting = setting
+        self.setting = settings
         self.engine = weakref.ref(engine)
 
     @classmethod
-    def produce(cls, engine, setting):
-        return cls(engine, setting)
+    def produce(cls, engine, settings):
+        return cls(engine, settings)
 
     def get_request(self, urls):
         for url in urls:
