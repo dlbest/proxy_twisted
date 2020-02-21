@@ -7,7 +7,7 @@
 
 # components
 COMPONENT = {
-    'Downloader': 'proxy_twisted.downloaders.Downloader',
+    'Downloader': 'proxy_twisted.core.downloaders.Downloader',
     'Checker': 'proxy_twisted.pipelines.Checker',
     'Pipeline': 'proxy_twisted.pipelines.Pipeline',
     'Scheduler': 'proxy_twisted.engine.Scheduler',

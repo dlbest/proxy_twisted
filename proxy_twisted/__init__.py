@@ -6,7 +6,7 @@
 @DATETIME = "11/12/19 10:11 PM"
 """
 
-from proxy_twisted.engine import Engine
+from proxy_twisted.core.engine import Engine
 from proxy_twisted import settings
 import logging
 from twisted.internet import reactor

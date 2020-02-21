@@ -9,12 +9,9 @@
 
 from twisted.internet.defer import Deferred, returnValue, succeed, DeferredList, inlineCallbacks
 
-from twisted.internet import reactor
-
-import sys
-from queue import Queue
 from proxy_twisted.utils import load_object   # low coupling
 
+from queue import Queue
 import logging
 
 
@@ -54,7 +51,7 @@ class Engine(object):
         self.component = {}
         if component:
             for i in component:
-                self.component[i] = load_object(component[i]).produce(self, setting)
+                self.component[i] = load_object(component[i]).produce(self, settings)
                 # self.component[i] = getattr(sys.modules[__name__], i, None).produce(self, setting)
                 # using produce class method like using factory
 
@@ -72,6 +69,7 @@ class Engine(object):
             deferred_list1.append(d)
         return DeferredList(deferred_list1)  # 待所有的deferred元素都激活返回后，才会激活deferred list
 
+    # return a fired deferred
     @inlineCallbacks
     def download(self, request, delay=0):
         """
@@ -115,6 +113,7 @@ class Engine(object):
         logger.debug('fire new requests')
         ddd = Deferred()
         ddd.addCallback(self.download, delay)
+        from twisted.internet import reactor
         reactor.callLater(delay, ddd.callback, request)  # 注册一个事件而已
         return ddd
 
