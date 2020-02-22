@@ -10,7 +10,7 @@
 import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(name)s %(lineno)s]: %(levelname)s: %(message)s')
 
-from RPC_twisted import ServerBuilder
+from RPC_twisted import ServerBuilder   # u need a rpc framework!
 from proxy_twisted.crawler.engine import Engine
 from proxy_twisted import settings
 from proxy_twisted.server.server import Server
