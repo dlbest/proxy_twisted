@@ -7,3 +7,7 @@
 *.iml
 out
 gen
+proxy_twisted/__pycache__/
+proxy_twisted/crawler/__pycache__/
+proxy_twisted/detector/__pycache__/
+proxy_twisted/server/__pycache__/
