@@ -7,11 +7,11 @@
 @TIME: 2/12/20 8:48 PM
 """
 
-from twisted.web.client import Agent, ProxyAgent      # using Agent class to realize http protocol
+from twisted.web.client import Agent  # using Agent class to realize http protocol
 from twisted.internet.defer import returnValue, Deferred
 from twisted.web.http_headers import Headers
 
-from proxy_twisted.protocols import ResponseBodyProtocol
+from proxy_twisted.crawler.protocols import ResponseBodyProtocol
 import logging
 import weakref
 
@@ -30,15 +30,17 @@ class Downloader(object):
         logger.info('downloader is starting...')
         self.engine = weakref.ref(engine)
         self.setting = setting
+        self.idle = 0
 
     @classmethod
     def produce(cls, engine, setting):
         return cls(engine, setting)
 
-    def download(self, request):
-        return self._download(request)
+    def download(self, request, spider):
+        self.idle += 1
+        return self._download(request, spider)
 
-    def _download(self, request):  # 事件可能在运行过程中已经发生，但是这个信息在reactor没有run的时候没有被捕获
+    def _download(self, request, spider):  # 事件可能在运行过程中已经发生，但是这个信息在reactor没有run的时候没有被捕获
         from twisted.internet import reactor
         agent = Agent(reactor)
 
@@ -59,6 +61,7 @@ class Downloader(object):
             response.deliverBody(ResponseBodyProtocol(d1))   # need a protocol to handle response body
 
             d1.addCallback(get_response, response=response)   # input response there!
+            d1.addCallback(request.callback or spider.parse)
             return d1  # 回调链必须有返回值  d1——d
 
         def handle_error(fail):

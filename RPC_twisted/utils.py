@@ -2,9 +2,9 @@
 
 
 """
-@PROJECT: proxy_twisted
+@PROJECT: RPC_twisted
 @AUTHOR: momen
-@TIME: 2/12/20 10:08 PM
+@TIME: 2/13/20 5:08 PM
 """
 
 
@@ -18,4 +18,3 @@ def load_object(name, default=None):
     if not obj_cls:
         obj_cls = importlib.import_module(name)
     return obj_cls
-
