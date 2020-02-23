@@ -1,1 +1,1 @@
-# proxy pool based in twisted
+# proxy pool based in twisted and rpc
